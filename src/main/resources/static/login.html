@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity OS - Auth</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle Theme">🌙</button>
+    <div class="auth-container">
+        <!-- Login Card -->
+        <div class="auth-card" id="loginCard">
+            <h2>Welcome Back</h2>
+            <p id="loginMessage" class="msg hidden"></p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" placeholder="Enter your password"
+                        required>
+                </div>
+                <button type="submit" id="loginBtn">Log In</button>
+            </form>
+            <p class="toggle-text">
+                Don't have an account? <a href="#" id="showRegister">Register</a>
+            </p>
+        </div>
+        <!-- Register Card -->
+        <div class="auth-card hidden" id="registerCard">
+            <h2>Create Account</h2>
+            <p id="regMessage" class="msg hidden"></p>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regName">Name</label>
+                    <input type="text" id="regName" name="name" placeholder="Full Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="regPassword" name="password" placeholder="••••••••" required>
+                        <button type="button" class="eye-toggle" id="toggleRegPassword">👁️</button>
+                    </div>
+                    <div class="strength-meter">
+                        <div class="strength-bar" id="strengthBar"></div>
+                    </div>
+                    <p class="password-hint" id="passwordHint">Requires 8+ chars, 1 uppercase, 1 number, 1 special</p>
+                </div>
+                <button type="submit" id="regBtn">Register</button>
+            </form>
+            <p class="toggle-text">
+                Already have an account? <a href="#" id="showLogin">Log In</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

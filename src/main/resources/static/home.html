@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity OS - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Auth Guard: runs before paint
+        if (!localStorage.getItem('jwtToken')) {
+            window.location.href = "index.html";
+        }
+    </script>
+</head>
+<body class="dashboard-body">
+    <header class="navbar">
+        <h1>Productivity OS</h1>
+        <div class="nav-actions">
+            <button id="themeToggle" class="theme-toggle nav-theme-toggle" type="button">🌙</button>
+            <button class="btn-primary" id="openCreateModalBtn">+ New Task</button>
+            <button class="btn-danger" id="logoutBtn">Log Out</button>
+        </div>
+    </header>
+    <!-- Search & Filter Controls -->
+    <section class="toolbar">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search tasks by title or description...">
+        </div>
+        <div class="filter-group">
+            <select id="statusFilter">
+                <option value="ALL">All Statuses</option>
+                <option value="TODO">TODO</option>
+                <option value="IN_PROGRESS">IN PROGRESS</option>
+                <option value="DONE">DONE</option>
+            </select>
+            <select id="priorityFilter">
+                <option value="ALL">All Priorities</option>
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+            </select>
+        </div>
+    </section>
+    <!-- Task Cards Container -->
+    <main id="taskList" class="task-container">
+        <p class="loading-state">Loading your tasks...</p>
+    </main>
+    <!-- Create Task Modal -->
+    <div id="createTaskModal" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Create New Task</h2>
+            <form id="createTaskForm">
+                <div class="form-group">
+                    <label for="createTitle">Title</label>
+                    <input type="text" id="createTitle" placeholder="Task title" required>
+                </div>
+                <div class="form-group">
+                    <label for="createDescription">Description</label>
+                    <textarea id="createDescription" rows="3" placeholder="Task details"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="createPriority">Priority</label>
+                    <select id="createPriority">
+                        <option value="LOW">LOW</option>
+                        <option value="MEDIUM" selected>MEDIUM</option>
+                        <option value="HIGH">HIGH</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="createDeadline">Deadline</label>
+                    <input type="date" id="createDeadline">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" id="closeCreateModalBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Edit Task Modal -->
+    <div id="editTaskModal" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Edit Task</h2>
+            <form id="editTaskForm">
+                <input type="hidden" id="editTaskId">
+                <div class="form-group">
+                    <label for="editTitle">Title</label>
+                    <input type="text" id="editTitle" placeholder="Task title" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" rows="3" placeholder="Task details"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editPriority">Priority</label>
+                    <select id="editPriority">
+                        <option value="LOW">LOW</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="HIGH">HIGH</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editStatus">Status</label>
+                    <select id="editStatus">
+                        <option value="TODO">TODO</option>
+                        <option value="IN_PROGRESS">IN PROGRESS</option>
+                        <option value="DONE">DONE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDeadline">Deadline</label>
+                    <input type="date" id="editDeadline">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" id="closeEditModalBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="ai-widget">
+        <div class="ai-widget-header">
+            <span>🤖 Productivity OS Agent</span>
+            <button id="toggleAiBtn" class="btn-icon">✖</button>
+        </div>
+        <div id="aiChatBox" class="ai-chat-box">
+            <div class="ai-msg bot">System ready. Ask me to generate a roadmap or test the agent.</div>
+        </div>
+        <form id="aiChatForm" class="ai-form">
+            <input type="text" id="aiPromptInput" placeholder="Type a prompt (e.g. status check)..." required
+                autocomplete="off">
+            <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem;">Send</button>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
