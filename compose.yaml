@@ -1,0 +1,20 @@
+#version:'3.9'
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: productivity_os_db
+    environment:
+      POSTGRES_DB: productivity_os
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
