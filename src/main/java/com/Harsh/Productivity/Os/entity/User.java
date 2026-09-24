@@ -18,6 +18,8 @@ public class User {
     private  String email;
     private  String password;
     private String role;
+    @Column(name = "tenant_id", nullable = false, length = 36)
+    private String tenantId = "default-tenant";
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Task> tasks;
 

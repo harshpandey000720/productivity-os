@@ -27,11 +27,11 @@ public class Task {
     private LocalDate deadline;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @Column(name = "tenant_id", nullable = false, length = 36)
+    private String tenantId = "default-tenant";
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     @JsonIgnore
     private User user;
 
-    public Task(int id, String title, String description, String status, String priority, LocalDate deadline, LocalDateTime createdAt, LocalDateTime updatedAt) {
-    }
 }
