@@ -35,3 +35,4 @@ build/
 .env.*
 application-local.properties
 application-local.yml
+scratch/
