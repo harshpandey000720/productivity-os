@@ -1,6 +1,8 @@
 package com.Harsh.Productivity.Os.ai;
 import com.Harsh.Productivity.Os.ai.dto.PriorityRequest;
 import com.Harsh.Productivity.Os.ai.dto.PrioritySuggestion;
+import com.Harsh.Productivity.Os.ai.dto.TaskPlanDraft;
+import com.Harsh.Productivity.Os.ai.dto.TaskPlanDraft.DraftStep;
 import com.Harsh.Productivity.Os.ai.dto.TaskPlanRequest;
 import com.Harsh.Productivity.Os.ai.dto.TaskPlanRequest.TaskInput;
 import com.Harsh.Productivity.Os.ai.dto.TaskPlanResponse;
@@ -17,7 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.time.temporal.ChronoUnit;
 @Service
 public class TaskAiSuggestionService {
     private static final Logger log = LoggerFactory.getLogger(TaskAiSuggestionService.class);
@@ -27,13 +29,22 @@ public class TaskAiSuggestionService {
         this.priorityAi = priorityAi;
         this.planningAi = planningAi;
     }
+    private String describeDeadline(LocalDate deadline, LocalDate today) {
+        if (deadline == null) return "none";
+        long days = ChronoUnit.DAYS.between(today, deadline);
+        if (days < 0) return deadline + " (overdue by " + (-days) + " days)";
+        if (days == 0) return deadline + " (due today)";
+        return deadline + " (in " + days + " days)";
+    }
     public PrioritySuggestion suggestPriority(PriorityRequest req) {
+        LocalDate today = LocalDate.now();
         PrioritySuggestion result = callSafely("priority suggestion", () ->
                 priorityAi.suggestPriority(
                         req.title(),
                         blankToNone(req.description()),
-                        req.deadline() == null ? "none" : req.deadline().toString(),
-                        LocalDate.now().toString()));
+                        describeDeadline(req.deadline(), today),
+                        today.toString()));
+
         if (result == null || result.priority() == null
                 || result.reasoning() == null || result.reasoning().isBlank()) {
             throw reject("The AI returned an incomplete priority suggestion", "incomplete priority", result);
@@ -41,47 +52,52 @@ public class TaskAiSuggestionService {
         return result;
     }
     public TaskPlanResponse planTasks(TaskPlanRequest req) {
-        String taskText = formatTasks(req.tasks());
-        TaskPlanResponse raw = callSafely("task plan", () ->
-                planningAi.planTasks(LocalDate.now().toString(), taskText));
-        return validateAndNormalize(raw, req.tasks());
+        LocalDate today = LocalDate.now();
+        List<TaskInput> tasks = req.tasks();
+        String taskText = formatTasks(tasks, today);
+        TaskPlanDraft draft = callSafely("task plan", () ->
+                planningAi.planTasks(today.toString(), taskText));
+        return validateAndMap(draft, tasks);
     }
-    private TaskPlanResponse validateAndNormalize(TaskPlanResponse raw, List<TaskInput> input) {
-        if (raw == null || raw.steps() == null || raw.steps().isEmpty()) {
-            throw reject("The AI returned an empty task plan", "empty plan", raw);
+    private TaskPlanResponse validateAndMap(TaskPlanDraft draft, List<TaskInput> input) {
+        if (draft == null || draft.steps() == null || draft.steps().isEmpty()) {
+            throw reject("The AI returned an empty task plan", "empty plan", draft);
         }
-        if (raw.steps().size() != input.size()) {
+        if (draft.steps().size() != input.size()) {
             throw reject("The AI plan does not cover every task",
-                    "expected " + input.size() + " steps but got " + raw.steps().size(), raw);
+                    "expected " + input.size() + " steps but got " + draft.steps().size(), draft);
         }
-        Set<String> remaining = input.stream()
-                .map(t -> normalize(t.title()))
-                .collect(Collectors.toCollection(HashSet::new));
-        List<PlanStep> normalized = new ArrayList<>();
-        for (PlanStep step : raw.steps()) {
-            if (step == null || step.taskTitle() == null) {
-                throw reject("The AI plan contained an empty step", "null step or title", raw);
+        Set<String> remaining = new HashSet<>();
+        for (int i = 0; i < input.size(); i++) {
+            remaining.add("T" + (i + 1));
+        }
+        List<PlanStep> steps = new ArrayList<>();
+        for (DraftStep step : draft.steps()) {
+            if (step == null || step.taskId() == null) {
+                throw reject("The AI plan contained an empty step", "null step or id", draft);
             }
-            if (!remaining.remove(normalize(step.taskTitle()))) {
+            String id = step.taskId().trim().toUpperCase();
+            if (!remaining.remove(id)) {
                 throw reject("The AI plan referenced an unknown or duplicate task",
-                        "title not matched: '" + step.taskTitle() + "' (still unmatched: " + remaining + ")", raw);
+                        "id not matched: '" + step.taskId() + "' (still unmatched: " + remaining + ")", draft);
             }
             if (step.estimatedMinutes() < 5 || step.estimatedMinutes() > 480) {
                 throw reject("The AI plan contained an unrealistic time estimate",
-                        "estimatedMinutes=" + step.estimatedMinutes() + " for '" + step.taskTitle() + "'", raw);
+                        "estimatedMinutes=" + step.estimatedMinutes() + " for " + id, draft);
             }
-            // Renumber ourselves rather than trusting the model's own numbering
-            normalized.add(new PlanStep(step.taskTitle(), normalized.size() + 1,
+            // The title comes from OUR data, never from the model's text
+            TaskInput task = input.get(Integer.parseInt(id.substring(1)) - 1);
+            steps.add(new PlanStep(task.title(), steps.size() + 1,
                     step.estimatedMinutes(), step.reason()));
         }
-        return new TaskPlanResponse(raw.summary(), normalized);
+        return new TaskPlanResponse(draft.summary(), steps);
     }
-    private String formatTasks(List<TaskInput> tasks) {
+    private String formatTasks(List<TaskInput> tasks, LocalDate today) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < tasks.size(); i++) {
             TaskInput t = tasks.get(i);
-            sb.append(i + 1).append(". ").append(t.title())
-                    .append(" | deadline: ").append(t.deadline() == null ? "none" : t.deadline())
+            sb.append("T").append(i + 1).append(": ").append(t.title())
+                    .append(" | deadline: ").append(describeDeadline(t.deadline(), today))
                     .append(" | details: ").append(blankToNone(t.description()))
                     .append("\n");
         }
@@ -91,7 +107,7 @@ public class TaskAiSuggestionService {
         try {
             return call.get();
         } catch (RuntimeException e) {
-            log.warn("AI {} call failed", operation, e); // full stack trace + cause chain
+            log.warn("AI {} call failed", operation, e);
             throw new AiResponseException("The AI could not produce a valid " + operation, e);
         }
     }
@@ -101,5 +117,4 @@ public class TaskAiSuggestionService {
         return new AiResponseException(publicMessage);
     }
     private String blankToNone(String s) { return (s == null || s.isBlank()) ? "none" : s; }
-    private String normalize(String s) { return s.trim().toLowerCase(); }
 }
