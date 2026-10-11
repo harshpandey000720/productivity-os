@@ -1,9 +1,13 @@
 package com.Harsh.Productivity.Os.exception;
+import com.Harsh.Productivity.Os.ai.exception.AiResponseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     // Handles 400 Bad Request (Triggers automatically when @Valid payload fails)
@@ -30,6 +34,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ex.getMessage());
+    }
+    @ExceptionHandler(AiResponseException.class)
+    public ResponseEntity<Map<String, String>> handleAiResponse(AiResponseException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(Map.of("error", "AI_RESPONSE_INVALID", "message", ex.getMessage()));
     }
 }
 
