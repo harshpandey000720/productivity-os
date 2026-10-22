@@ -1,5 +1,6 @@
 package com.Harsh.Productivity.Os.exception;
 import com.Harsh.Productivity.Os.ai.exception.AiResponseException;
+import com.Harsh.Productivity.Os.ai.exception.AiUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,10 +36,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(ex.getMessage());
     }
+    // 502: a provider answered, but the answer was unusable (every provider tried)
     @ExceptionHandler(AiResponseException.class)
     public ResponseEntity<Map<String, String>> handleAiResponse(AiResponseException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(Map.of("error", "AI_RESPONSE_INVALID", "message", ex.getMessage()));
+                .body(Map.of("error", "AI_RESPONSE_INVALID", "message", "The AI returned an unusable response"));
+    }
+    // 503: no provider could be reached / all circuits open / none configured
+    @ExceptionHandler(AiUnavailableException.class)
+    public ResponseEntity<Map<String, String>> handleAiUnavailable(AiUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header("Retry-After", "30")
+                .body(Map.of("error", "AI_UNAVAILABLE", "message", ex.getMessage()));
     }
 }
 
