@@ -1,7 +1,7 @@
 # Week 3 — Hybrid RAG
 
 **Design:** [Document Q&A / RAG design](../architecture/document-qa-rag.md)  
-**Dates:** [fill in only if known]
+**Dates:** Not recorded yet
 
 ## Goal
 
@@ -12,13 +12,13 @@ PostgreSQL full-text search, pgvector vector search, RRF, and validated citation
 
 | Session | Planned milestone | Actual result | Verification | Status |
 |---|---|---|---|---|
-| 1 | Finalize RAG design | Draft provided in chat; repository copy not confirmed | [review and commit] | Pending |
-| 2 | Local embedding smoke test and chunker | Pending | [dimension check and unit tests] | Not started |
-| 3 | Migration and document ingestion | Pending | [migration and ingestion tests] | Not started |
-| 4 | Scoped vector retrieval | Pending | [query and ownership tests] | Not started |
-| 5 | Scoped keyword retrieval | Pending | [full-text search tests] | Not started |
-| 6 | RRF and cited answers | Pending | [ranking and citation validation] | Not started |
-| 7 | Evaluation and hardening | Pending | [metrics and regression tests] | Not started |
+| 1 | Finalize RAG design | Created `docs/architecture/document-qa-rag.md` as the Week 3 design baseline. | Design document exists in the repository; implementation is not claimed here. | Implemented |
+| 2 | Local embedding smoke test and chunker | Added Ollama embedding configuration and `EmbeddingService` with document/query prefixes and a 768-dimension check. Added offset-aware document chunks that preserve metadata. | `DocumentChunkerTest`: 8 passed. Opt-in `EmbeddingModelSmokeTest`: 2 passed; dimension 768. Full suite: 53 tests, 0 failures/errors, 2 skipped; `BUILD SUCCESS`. | Verified |
+| 3 | Migration and document ingestion | Not started | [migration and ingestion tests] | Not started |
+| 4 | Scoped vector retrieval | Not started | [query and ownership tests] | Not started |
+| 5 | Scoped keyword retrieval | Not started | [full-text search tests] | Not started |
+| 6 | RRF and cited answers | Not started | [ranking and citation validation] | Not started |
+| 7 | Evaluation and hardening | Not started | [metrics and regression tests] | Not started |
 
 A session may take more than one day. Move a milestone forward only when its
 acceptance checks pass.
@@ -27,7 +27,8 @@ acceptance checks pass.
 
 | Decision | Previous choice | New choice | Evidence / reason |
 |---|---|---|---|
-| [decision] | [old] | [new] | [test result, measurement, or constraint] |
+| Chunk representation | LangChain4j `TextSegment` splitting | Custom `DocumentChunk` with offsets and metadata | Chunker tests verify chunk bounds, offsets, overlap, and metadata preservation. |
+| AI service wiring | Inject a standalone `ChatModel` / use Spring-managed `@AiService` beans | Route typed AI service calls through `AiGateway` | Application-context and full-suite tests pass without a standalone `ChatModel` bean. Provider calls still need separate verification. |
 
 ## Evaluation results
 
@@ -37,13 +38,19 @@ acceptance checks pass.
 | Keyword | — | — | — | — |
 | Hybrid RRF | — | — | — | — |
 
+## Current carry-over after Session 2
+
+- The full-suite test context logged zero configured AI providers. Chat-provider calls were not verified by that run.
+- Surefire logged a non-fatal forked-JVM shutdown timeout after tests completed successfully.
+- Next: begin Session 3, database migration and document ingestion.
+
 ## End-of-week summary
 
 - Working:
-    - [verified behavior]
+  - [Add verified behavior when Week 3 is complete]
 - Tests passing:
-    - [command and result]
+  - [Record final commands and results at the end of the week]
 - Known limitations:
-    - [honest list]
+  - [Update at the end of the week]
 - Carry-over:
-    - [next concrete task]
+  - [Record remaining work at the end of the week]

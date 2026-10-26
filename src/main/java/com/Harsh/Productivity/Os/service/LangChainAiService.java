@@ -1,19 +1,26 @@
 package com.Harsh.Productivity.Os.service;
 
-import dev.langchain4j.model.chat.ChatModel;
+import com.Harsh.Productivity.Os.ai.gateway.AiGateway;
+import com.Harsh.Productivity.Os.ai.service.PromptGenerationAiService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class LangChainAiService implements AiService {
-    private final ChatModel chatModel;
-    public LangChainAiService(ChatModel chatModel) {
-        this.chatModel = chatModel;
+    private final AiGateway aiGateway;
+
+    public LangChainAiService(AiGateway aiGateway) {
+        this.aiGateway = aiGateway;
     }
+
     @Override
     public String generateResponse(String prompt) {
-        if (prompt == null||prompt.isBlank()) {
+        if (prompt == null || prompt.isBlank()) {
             return "Prompt cannot be empty";
         }
-        return chatModel.chat(prompt);
+
+        return aiGateway.call(
+                PromptGenerationAiService.class,
+                ai -> ai.generateResponse(prompt)
+        );
     }
 }

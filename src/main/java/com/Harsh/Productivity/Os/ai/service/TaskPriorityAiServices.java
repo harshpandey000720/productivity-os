@@ -6,7 +6,7 @@ import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 import dev.langchain4j.service.spring.AiService;
 
-@AiService
+//@AiService
 public interface TaskPriorityAiServices {
     @SystemMessage("""
             You are a productivity assistant that judges how urgent a task is.
