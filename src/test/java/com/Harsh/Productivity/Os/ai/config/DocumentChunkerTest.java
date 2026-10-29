@@ -105,4 +105,23 @@ public class DocumentChunkerTest {
             assertEquals("doc-long", chunks.get(i).metadata().get("documentId"));
         }
     }
+    @Test
+    void longDocumentProducesAReasonableNumberOfChunks() {
+        // about 6000 characters: with 800/100 this should give roughly 9 chunks
+        List<DocumentChunk> chunks = new DocumentChunker(800, 100).chunk("word ".repeat(1200));
+        assertTrue(chunks.size() <= 10, "expected about 9 chunks but got " + chunks.size());
+        for (int i = 1; i < chunks.size(); i++) {
+            assertTrue(chunks.get(i).startOffset() - chunks.get(i - 1).startOffset() > 300,
+                    "each chunk should start well after the previous one");
+        }
+    }
+
+    @Test
+    void doesNotCutInsideADecimalNumber() {
+        // The window ends right after the "." in "3.5". The chunker must look at the NEXT character ("5"),
+        // see that it is not whitespace, and fall back to the last space instead.
+        List<DocumentChunk> chunks = new DocumentChunker(22, 0).chunk("a".repeat(19) + " 3.5 percent more text");
+
+        assertEquals("a".repeat(19), chunks.get(0).content());
+    }
 }

@@ -52,7 +52,7 @@ public class DocumentChunker {
             if(end>=normalized.length()) {
                 break;
             }
-            int nextStart=Math.min(contentEnd-overlap,start+1);
+            int nextStart=Math.max(contentEnd-overlap,start+1);
             if(nextStart<=start) throw new IllegalStateException("Chunker failed to make forward progress");
             start=nextStart;
         }
@@ -84,7 +84,7 @@ public class DocumentChunker {
     private int findLastSentenceBoundary(String text,int start,int end){
         for (int i = end-1; i >start ; i--) {
             char current=text.charAt(i);
-            if((current=='.'||current=='!'||current=='?')&&(i + 1 == end || Character.isWhitespace(text.charAt(i + 1)))){
+            if((current=='.'||current=='!'||current=='?')&&(i + 1 >= text.length() || Character.isWhitespace(text.charAt(i + 1)))){
                 return i+1;
             }
         }

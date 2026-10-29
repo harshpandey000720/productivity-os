@@ -85,6 +85,13 @@
 		<!--			<scope>runtime</scope>-->
 		<!--		</dependency>-->
 		<!-- PostgreSQL Driver -->
+
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-pgvector</artifactId>
+			<version>1.18.1-beta28</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
