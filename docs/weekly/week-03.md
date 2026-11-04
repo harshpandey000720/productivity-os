@@ -16,8 +16,8 @@ Build document ingestion and question answering with local embeddings, PostgreSQ
 | 3 | pgvector schema, storage, and chunk indexing | Configured LangChain4j’s pgvector embedding store to use the application `DataSource`. Added chunk indexing with tenant, document, index, offset, and chunk metadata. | `PgVectorDocumentSearchIT` successfully stored and searched chunks in PostgreSQL. Flyway migration location corrected to `classpath:db/migration`. | Verified |
 | 4 | Scoped vector retrieval | Added vector search filtered by both tenant ID and document ID. | `PgVectorDocumentSearchIT` found a matching chunk for the correct scope and returned no results for a different tenant or document. | Verified |
 | 5 | Scoped keyword retrieval | Added PostgreSQL full-text search using `websearch_to_tsquery`, `ts_rank_cd`, and a GIN index over chunk text. Added tenant and document filtering to the keyword query. | `PgVectorKeywordSearchIT` passed. Full suite: 55 tests, 0 failures, 0 errors, 2 skipped. | Verified |
-| 6 | RRF and cited answers | Not started. | Combine independently ranked vector and keyword results using Reciprocal Rank Fusion. Add citation construction and validation. | Not started |
-| 7 | Evaluation and hardening | Not started. | Record retrieval metrics, citation validity, answer checks, and latency. | Not started |
+| 6 | RRF fusion | Implemented RRF fusion; the hybrid search service combines vector and keyword results. Citation construction and validation remain outstanding. | `RrfFusionServiceTest` passed. Full suite: 56 tests, 0 failures, 0 errors, 2 skipped. | Verified |
+| 7 | Cited answers, evaluation and hardening | Not started. | Validate citations and measure retrieval quality and latency. | Not started |
 
 A session may take more than one day. Mark a milestone complete only when its acceptance checks pass.
 
@@ -35,6 +35,7 @@ A session may take more than one day. Mark a milestone complete only when its ac
 | Keyword index | GIN expression index over `to_tsvector('english', coalesce(text, ''))` | The index matches the search expression and supports PostgreSQL full-text lookup. |
 | Retrieval scope | Apply tenant ID and document ID filters to both vector and keyword paths | Integration tests verify that another tenant or document receives no results. |
 | AI service wiring | Route typed AI service calls through `AiGateway` | Application-context and full-suite tests pass without a standalone `ChatModel` bean. Provider calls still require separate verification. |
+| Hybrid ranking | Reciprocal Rank Fusion with `k = 60`, merging by embedding ID | Combines vector and keyword rankings without adding their differently scaled raw scores. The fusion test checks deduplication, ranks, scores, and metadata. |
 
 ## Evaluation results
 
@@ -50,12 +51,12 @@ Metrics are not yet measured; blank values do not represent zero.
 
 - Vector storage and tenant/document-scoped vector retrieval are verified.
 - PostgreSQL keyword retrieval and tenant/document filtering are verified.
-- Vector and keyword retrieval currently return independent ranked lists.
-- The latest full suite completed with **55 tests, 0 failures, 0 errors, and 2 skipped**.
-- The current integration tests index chunks directly. A complete user-facing document upload and ingestion lifecycle has not yet been verified.
-- Next: combine vector and keyword results with Reciprocal Rank Fusion, then build validated citations.
+- RRF fusion is implemented and its fusion test passed.
+- The latest full suite completed with **56 tests, 0 failures, 0 errors, and 2 skipped**.
+- Integration tests index chunks directly; a complete user-facing document upload and ingestion lifecycle has not yet been verified.
+- Next: implement citations and citation validation, then measure retrieval quality and latency.
 
-## End-of-week summary
+## Current summary (after Session 6)
 
 - Working:
   - Ollama embedding generation with a verified 768-dimensional output.
@@ -68,14 +69,12 @@ Metrics are not yet measured; blank values do not represent zero.
   - `EmbeddingModelSmokeTest`: 2 passed; embedding dimension 768.
   - `PgVectorDocumentSearchIT`: passed.
   - `PgVectorKeywordSearchIT`: passed.
-  - Full suite: 55 tests, 0 failures, 0 errors, 2 skipped.
+  - `RrfFusionServiceTest`: passed.
+  - Full suite: 56 tests, 0 failures, 0 errors, 2 skipped.
 - Known limitations:
-  - Vector and keyword results are not yet fused into one hybrid ranking.
   - Citations and citation validation are not implemented.
   - Retrieval metrics have not yet been measured.
   - Complete document upload and ingestion lifecycle is not yet verified.
 - Carry-over:
-  - Implement RRF fusion.
-  - Add cited answer output.
-  - Add citation validity tests.
-  - Measure retrieval quality and latency.
+  - Add citations to hybrid search results and validate that citations reference real stored chunks.
+  - Add citation-focused tests.
