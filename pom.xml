@@ -170,7 +170,11 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-ollama-spring-boot4-starter</artifactId>
 			<version>1.18.1-beta28</version>
-
+		</dependency>
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-onnx-scoring</artifactId>
+			<version>1.18.1-beta28</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
