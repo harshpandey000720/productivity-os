@@ -9,12 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class GroundedAnswerServiceTest {
     @Test
@@ -69,5 +67,38 @@ class GroundedAnswerServiceTest {
         assertEquals(1, response.citations().size());
         assertEquals("chunk-1", response.citations().getFirst().citationId());
         assertEquals("leave-policy.txt", response.citations().getFirst().source());
+    }
+
+    @Test
+    void rejectsOutOfScopeEvidenceBeforeRerankingOrCallingTheAi() {
+        HybridDocumentSearchService search = mock(HybridDocumentSearchService.class);
+        CandidateReranker reranker = mock(CandidateReranker.class);
+        AiGateway gateway = mock(AiGateway.class);
+        GroundedAnswerService service =
+                new GroundedAnswerService(search, reranker, gateway);
+        HybridSearchCandidate otherTenantCandidate = new HybridSearchCandidate(
+                "foreign-chunk",
+                "Private text from another tenant.",
+                0.02,
+                1,
+                1,
+                0.8,
+                0.7,
+                Map.of(
+                        "tenantId", "tenant-other",
+                        "documentId", "doc-1",
+                        "chunkIndex", 0
+                )
+        );
+
+        when(search.search("tenant-1", "doc-1", "question", 12))
+                .thenReturn(List.of(otherTenantCandidate));
+
+        GroundedAnswerResponse response =
+                service.answer("tenant-1", "doc-1", "question");
+
+        assertTrue(response.insufficientEvidence());
+        assertTrue(response.citations().isEmpty());
+        verifyNoInteractions(reranker, gateway);
     }
 }
